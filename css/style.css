@@ -1,0 +1,99 @@
+/* Reset di base per rimuovere margini e padding predefiniti */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Corpo della pagina */
+body {
+    font-family: Arial, sans-serif; /* Imposta un font pulito */
+    background-color: black;  /* Colore di sfondo chiaro */
+    min-height: 100vh;  /* Altezza minima della pagina */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+/* Contenitore principale che ospita il form */
+.content-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 90vh;
+}
+
+/* Contenitore del form */
+#form-container {
+    width: 100%;
+    max-width: 400px;  /* Limita la larghezza per dispositivi più grandi */
+    padding: 30px;
+    background-color: black;
+    border: solid 1px #4CAF50;
+    color: white;
+    border-radius: 10px; /* Angoli arrotondati */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Aggiungi ombra per risaltare */
+}
+
+/* Stile per il titolo del form */
+form h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #4CAF50;  /* Colore verde per il titolo */
+}
+
+/* Stile per gli input del form */
+input, select{
+    background-color: ghostwhite;
+    width: 100%;
+    height: 40px;
+    padding: 10px;
+    margin: 10px 0; /* Spazio tra gli input */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+/* Stile per il pulsante di invio */
+button {
+    background-color: #4CAF50; /* Colore verde per il bottone */
+    color: white;
+    border: none;
+    padding: 15px;
+    width: 100%;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+button:hover {
+    background-color: #45a049; /* Colore leggermente più scuro al passaggio del mouse */
+}
+
+/* Stile per il link di navigazione tra form */
+a {
+    color: #4CAF50;  /* Colore verde per i link */
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;  /* Sottolinea il link quando ci si passa sopra */
+}
+
+/* Stile per il messaggio di errore */
+.error-message {
+    color: red;
+    text-align: center;
+    margin-top: 15px;
+}
+
+/* Stile per il messaggio di successo */
+.success-message {
+    color: green;
+    text-align: center;
+    margin-top: 15px;
+}
