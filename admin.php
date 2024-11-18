@@ -27,9 +27,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $id = $_POST["studente_id"];
         $nome = $_POST["nome"];
         $email = $_POST["email"];
+        $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
         $role = $_POST["role"];
 
-        $stmt = $conn->prepare("UPDATE utenti SET nome = ?, email = ?, role = ? WHERE id = ?");
+        $stmt = $conn->prepare("UPDATE utenti SET nome = ?, email = ?, password = ?, role = ? WHERE id = ?");
         $stmt->bind_param("ssss", $nome, $email, $password, $role);
         $stmt->execute();
         $stmt->close();
@@ -64,6 +65,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $titolo = $_POST["titolo"];
         $descrizione = $_POST["descrizione"];
         $professore_id = $_POST["professore_id"];
+
+        //Controlla se esiste professore
+        $stmt_check_prof = $conn->prepare("SELECT id FROM utenti WHERE id = ? AND role = 'professore'");
+        $stmt_check_prof->bind_param("i", $professore_id);
+        $stmt_check_prof->execute();
+        $stmt_check_prof->store_result();
+
+        if ($stmt_check_prof->num_rows == 0) {
+            echo "Professore non trovato!";
+            exit();
+        }
 
         $stmt = $conn->prepare("UPDATE corsi SET titolo = ?, descrizione = ?, professore_id = ? WHERE id = ?");
         $stmt->bind_param("ssi", $titolo, $descrizione, $professore_id);
