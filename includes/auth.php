@@ -20,6 +20,6 @@ function hasRole($role): bool {
 #[NoReturn] function logout(): void {
     session_unset();
     session_destroy();
-    header("location: login.php");
+    header("location: index.php");
     exit();
 }
