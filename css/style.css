@@ -143,6 +143,10 @@ td:last-child {
     width: 100px;
 }
 
+
+.btn-azione {
+    padding: 4px 8px;
+}
 /* Stile per i pulsanti delle azioni */
 button.action-button {
     background-color: #B4182D;
