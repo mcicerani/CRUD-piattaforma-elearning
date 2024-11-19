@@ -90,6 +90,10 @@ a:hover {
 
 /* ADMIN DASHBOARD */
 
+h1,h2{
+    margin: 10px 0;
+}
+
 /* Stile per la tabella */
 table {
     width: 80%;

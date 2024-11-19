@@ -185,7 +185,7 @@ $professori = $conn->query($query_professori)->fetch_all(MYSQLI_ASSOC);
 // Query per tabella corsi (id, titolo e descrizione) con i prof del corso e gli studenti iscritti
 $query_corsi = "
     SELECT  corsi.id AS corso_id, corsi.titolo AS corso_titolo, corsi.descrizione AS corso_descrizione,
-            utenti.nome AS professore_nome,
+            corsi.professore_id AS professore_id, utenti.nome AS professore_nome,
             GROUP_CONCAT(utenti_studente.nome SEPARATOR ', ') AS studenti
     FROM corsi
     LEFT JOIN utenti ON corsi.professore_id = utenti.id AND utenti.role = 'professore'
@@ -214,6 +214,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
 </head>
 </html>
 <body>
+
     <h1>Gestione Utenti e Corsi</h1>
 
     <!-- Studenti -->
@@ -324,7 +325,91 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
         </tbody>
     </table>
 
-    <form method="POST">
-    <button type="submit" name="action" value="logout">Logout</button>
-</form>
+    <!-- Corsi -->
+
+    <h2>Corsi</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Titolo</th>
+            <th>Descrizione</th>
+            <th>Professore</th>
+            <th>Alunni</th>
+            <th>Azioni</th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($corsi as $corso): ?>
+            <tr>
+                <td><?= $corso['corso_id'] ?></td>
+                <td><?= htmlspecialchars($corso["corso_titolo"])?></td>
+                <td><?= htmlspecialchars($corso["corso_descrizione"])?></td>
+                <td><?= htmlspecialchars($corso["professore_nome"])?></td>
+                <td><?= htmlspecialchars($corso["studenti"])?></td>
+                <td class="azioni">
+                    <button class="btn-azione" onclick="toggleForm('corso', <?= $corso['corso_id']?>)">Modifica</button>
+                    <form method="post">
+                        <input type="hidden" name="corso_id" value="<?= $corso['corso_id'] ?>">
+                        <button class="btn-azione" type="submit" name="action" value="delete_course">Elimina</button>
+                    </form>
+                </td>
+            </tr>
+            <tr class="form-row" id="corso-form-<?= $corso['corso_id'] ?>" style="display: none;">
+                <td colspan="6">
+                    <form method="post">
+                        <input type="hidden" name="corso_id" value="<?= $corso['corso_id'] ?>">
+                        <label>
+                            Titolo:
+                            <input type="text" name="titolo" value="<?= htmlspecialchars($corso["corso_titolo"]) ?>" required>
+                        </label>
+                        <label>
+                            Descrizione:
+                            <input type="text" name="descrizione" value="<?= htmlspecialchars($corso["corso_descrizione"]) ?>" required>
+                        </label>
+                        <label>
+                            ID Professore:
+                            <input type="text" name="professore_id" value="<?= htmlspecialchars($corso["professore_id"]) ?>" required>
+                        </label>
+
+                        <button type="submit" name="action" value="update_course">Salva</button>
+                    </form>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <!-- Crea Utente -->
+
+    <button onclick="toggle('utente')">Crea Utente</button>
+
+    <form id="utente" method="POST" style="display: none">
+        <input type="text" name="nome" placeholder="Nome" required/>
+        <input type="email" name="email" placeholder="Email" required/>
+        <input type="password" name="password" placeholder="Password" required/>
+        <select name="role" required>
+            <option value="studente">Studente</option>
+            <option value="professore">Professore</option>
+        </select>
+        <button type="submit" name="action" value="create_user">Crea Utente</button>
+    </form>
+
+    <!-- Crea Corso -->
+
+    <button onclick="toggle('corso')">Crea Corso</button>
+
+    <form id="corso" method="POST" style="display: none">
+        <input type="text" name="titolo" placeholder="Titolo" required/>
+        <input type="text" name="descrizione" placeholder="Descrizione" required/>
+        <input type="text" name="professore_id" placeholder="ID Professore" required/>
+        <button type="submit" name="action" value="create_course">Crea Corso</button>
+    </form>
+
+    <!-- Logout -->
+
+    <form method="POST" class="logout">
+        <button type="submit" name="action" value="logout">Logout</button>
+    </form>
+
 </body>
