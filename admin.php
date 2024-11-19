@@ -118,12 +118,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             case 'update_user':
                 // Aggiornamento utente
-                updateUser($_POST["studente_id"], $_POST["nome"], $_POST["role"]);
+                if (isset($_POST["studente_id"])){
+                    updateUser($_POST["studente_id"], $_POST["nome"], $_POST["role"]);
+                } elseif (isset($_POST["professore_id"])) {
+                    updateUser($_POST["professore_id"], $_POST["nome"], $_POST["role"]);
+                }
                 break;
+
 
             case 'delete_user':
                 // Eliminazione utente
-                deleteUser($_POST["studente_id"]);
+                if (isset($_POST["studente_id"])) {
+                    deleteUser($_POST["studente_id"]);
+                } elseif (isset($_POST["professore_id"])) {
+                    deleteUser($_POST["professore_id"]);
+                }
                 break;
 
             case 'create_course':
@@ -206,21 +215,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
 </html>
 <body>
     <h1>Gestione Utenti e Corsi</h1>
+
     <!-- Studenti -->
+
     <h2>Studenti</h2>
     <table>
         <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>Email</th>
-                <th>Corsi</th>
-                <th>Ruolo</th>
-                <th>Azioni</th>
-            </tr>
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Corsi</th>
+            <th>Ruolo</th>
+            <th>Azioni</th>
+        </tr>
         </thead>
         <tbody>
-            <?php foreach ($studenti as $studente): ?>
+        <?php foreach ($studenti as $studente): ?>
             <tr>
                 <td><?= $studente['studente_id'] ?></td>
                 <td><?= htmlspecialchars($studente["studente_nome"])?></td>
@@ -228,10 +239,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
                 <td><?= htmlspecialchars($studente["corsi"])?></td>
                 <td><?= htmlspecialchars($studente["studente_role"])?></td>
                 <td class="azioni">
-                    <button class="btn-modifica" onclick="toggleForm('studente', <?= $studente['studente_id']?>)">Modifica</button>
+                    <button class="btn-azione" onclick="toggleForm('studente', <?= $studente['studente_id']?>)">Modifica</button>
                     <form method="post">
                         <input type="hidden" name="studente_id" value="<?= $studente['studente_id'] ?>">
-                        <button class="btn-elimina" type="submit" name="action" value="delete_user">Elimina</button>
+                        <button class="btn-azione" type="submit" name="action" value="delete_user">Elimina</button>
                     </form>
                 </td>
             </tr>
@@ -258,7 +269,62 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
         <?php endforeach; ?>
         </tbody>
     </table>
-<form method="POST">
+
+    <!-- Professori -->
+
+    <h2>Professori</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Corsi</th>
+            <th>Ruolo</th>
+            <th>Azioni</th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($professori as $professore): ?>
+            <tr>
+                <td><?= $professore['professore_id'] ?></td>
+                <td><?= htmlspecialchars($professore["professore_nome"])?></td>
+                <td><?= htmlspecialchars($professore["professore_email"])?></td>
+                <td><?= htmlspecialchars($professore["corsi"])?></td>
+                <td><?= htmlspecialchars($professore["professore_role"])?></td>
+                <td class="azioni">
+                    <button class="btn-azione" onclick="toggleForm('professore', <?= $professore['professore_id']?>)">Modifica</button>
+                    <form method="post">
+                        <input type="hidden" name="professore_id" value="<?= $professore['professore_id'] ?>">
+                        <button class="btn-azione" type="submit" name="action" value="delete_user">Elimina</button>
+                    </form>
+                </td>
+            </tr>
+            <tr class="form-row" id="professore-form-<?= $professore['professore_id'] ?>" style="display: none;">
+                <td colspan="6">
+                    <form method="post">
+                        <input type="hidden" name="professore_id" value="<?= $professore['professore_id'] ?>">
+                        <label>
+                            Nome:
+                            <input type="text" name="nome" value="<?= htmlspecialchars($professore["professore_nome"]) ?>" required>
+                        </label>
+                        <label>
+                            Ruolo:
+                            <!-- Menu a tendina per il Ruolo -->
+                            <select name="role" required>
+                                <option value="studente" <?= $professore["professore_role"] === 'studente' ? 'selected' : '' ?>>Studente</option>
+                                <option value="professore" <?= $professore["professore_role"] === 'professore' ? 'selected' : '' ?>>Professore</option>
+                            </select>
+                        </label>
+                        <button type="submit" name="action" value="update_user">Salva</button>
+                    </form>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <form method="POST">
     <button type="submit" name="action" value="logout">Logout</button>
 </form>
 </body>
