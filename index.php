@@ -82,20 +82,14 @@ $error_message = '';
 
 // Gestione della registrazione
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
-    $nome = $_POST['nome'];
-    $email = $_POST['email'];
-    $password = $_POST['password'];
-    $role = $_POST['role'];
-
-    $success_message = registerUser($nome, $email, $password, $role);
+    // Registrazione con i dati del form
+    $success_message = registerUser($_POST['nome'], $_POST['email'], $_POST['password'], $_POST['role']);
 }
 
 // Gestione del login
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
-    $email = $_POST['email'];
-    $password = $_POST['password'];
-
-    $error_message = loginUser($email, $password);
+    // Login con i dati del form
+    $error_message = loginUser($_POST['email'], $_POST['password']);
 }
 ?>
 

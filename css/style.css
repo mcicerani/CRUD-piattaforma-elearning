@@ -14,6 +14,7 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    color: white;
 }
 
 /* FORM REGISTRAZIONE E LOGIN */
@@ -88,3 +89,71 @@ a:hover {
 }
 
 /* ADMIN DASHBOARD */
+
+/* Stile per la tabella */
+table {
+    width: 80%;
+    margin: 20px 0;
+    border-collapse: collapse;
+    background-color: #2A3543; /* Colore di sfondo della tabella */
+    border-radius: 10px; /* Angoli arrotondati per la tabella */
+}
+
+/* Stile per le celle della tabella */
+th, td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #4E5A72; /* Linea separatrice tra le righe */
+}
+
+/* Colore di sfondo per le intestazioni della tabella */
+th {
+    background-color: #3E4A61;
+    color: white;
+    font-weight: bold;
+}
+tr{
+    width: 100%;
+}
+/* Colore alternato per le righe della tabella */
+tr:nth-child(even) {
+    background-color: #3E4A61;
+}
+
+/* Colore di sfondo per le righe pari */
+tr:nth-child(odd) {
+    background-color: #2A3543;
+}
+
+/* Stile per il testo all'interno delle celle */
+td {
+    color: #D1D9E6;
+    font-size: 14px;
+}
+
+/* Aggiungi un effetto hover sulle righe della tabella */
+tr:hover {
+    background-color: #4E5A72; /* Colore di sfondo più chiaro al passaggio del mouse */
+    cursor: pointer;
+}
+
+/* Stile per la colonna delle azioni */
+td:last-child {
+    text-align: center;
+    width: 100px;
+}
+
+/* Stile per i pulsanti delle azioni */
+button.action-button {
+    background-color: #B4182D;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button.action-button:hover {
+    background-color: #54162B; /* Colore più scuro al passaggio del mouse */
+}
