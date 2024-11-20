@@ -96,8 +96,7 @@ function updateCourse($id, $titolo, $descrizione, $professore_id): void
 }
 
 // Funzione per eliminare un corso
-function deleteCourse($id): void
-{
+function deleteCourse($id): void{
     global $conn;
 
     // Elimina le iscrizioni
@@ -112,8 +111,6 @@ function deleteCourse($id): void
     $stmt_corso->execute();
     $stmt_corso->close();
 }
-
-
 
 // CRUD: Operazioni per utente admin
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -157,6 +154,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 // Eliminazione corso
                 deleteCourse($_POST["corso_id"]);
                 break;
+
+            case 'logout':
+                logout();
         }
     }
 }
@@ -204,10 +204,6 @@ $query_corsi = "
 
 $corsi = $conn->query($query_corsi)->fetch_all(MYSQLI_ASSOC);
 
-// Bottone logout
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["action"] == 'logout') {
-    logout();
-}
 ?>
 
 <!DOCTYPE html>
@@ -389,8 +385,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
     </table>
 
     <!-- Crea Utente -->
-
-    <button onclick="toggle('utente')">Crea Utente</button>
+    <div style="display: flex; flex-direction: row; width: 100%;justify-content: center;align-items: center;">
+        <button style="margin: 10px 10px;" onclick="toggle('utente')">Crea Utente</button>
+        <button style="margin: 10px 10px;" onclick="toggle('corso')">Crea Corso</button>
+    </div>
 
     <form id="utente" method="POST" style="display: none">
         <label>
@@ -413,7 +411,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
 
     <!-- Crea Corso -->
 
-    <button onclick="toggle('corso')">Crea Corso</button>
 
     <form id="corso" method="POST" style="display: none">
         <label>

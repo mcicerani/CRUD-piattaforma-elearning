@@ -37,9 +37,11 @@ body {
     color: white;
     border-radius: 10px; /* Angoli arrotondati */
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Aggiungi ombra per risaltare */
-
 }
 
+form .button{
+    align-self: center;
+}
 /* Stile per il titolo del form */
 form h2 {
     text-align: center;

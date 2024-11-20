@@ -1,5 +1,8 @@
 <?php
 global $conn;
+
+use JetBrains\PhpStorm\NoReturn;
+
 require_once "./includes/config.php";
 require_once "./includes/auth.php";
 
@@ -14,15 +17,8 @@ function checkProfessorPrivileges(): void
 
 checkProfessorPrivileges();
 
-
-
 //Salva id del professore loggato
 $professore_id = $_SESSION['user_id'];
-
-// Bottone logout
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["action"] == 'logout') {
-    logout();
-}
 
 // Funzione per creare corso del professore loggato
 function createMyCourse($titolo, $descrizione, $professore_id): void
@@ -46,8 +42,26 @@ function updateMyCourse($id, $titolo, $descrizione): void
     $stmt->close();
 }
 
-// Funzione per uploadare file .zip della lezione
-function uploadLesson($corso_id, $titolo, $descrizione, $file): string
+// Funzione per eliminare un corso
+function deleteMyCourse($id): void
+{
+    global $conn;
+
+    // Elimina le iscrizioni
+    $stmt_iscrizioni = $conn->prepare("DELETE FROM iscrizioni WHERE corso_id = ?");
+    $stmt_iscrizioni->bind_param("i", $id);
+    $stmt_iscrizioni->execute();
+    $stmt_iscrizioni->close();
+
+    // Elimina il corso
+    $stmt_corso = $conn->prepare("DELETE FROM corsi WHERE id = ?");
+    $stmt_corso->bind_param("i", $id);
+    $stmt_corso->execute();
+    $stmt_corso->close();
+}
+
+// Funzione per Caricare la lezione
+function uploadLesson($corso_id, $titolo, $descrizione, $file): void
 {
     global $conn;  // Connessione al database
 
@@ -70,8 +84,18 @@ function uploadLesson($corso_id, $titolo, $descrizione, $file): string
         $file_name = strtolower(str_replace(" ", "_", $corso_titolo)) . "_" . strtolower(str_replace(" ", "_", $titolo)) . ".zip";
 
         // Definisci la cartella di destinazione
-        $target_dir = "lezioni/";  // Cartella di destinazione sul server
-        $target_file = $target_dir . $file_name;  // Percorso completo del file
+        $target_dir = $_SERVER['DOCUMENT_ROOT'] . "/lezioni/";
+
+        // Verifica se la directory esiste, altrimenti la crea
+        if (!file_exists($target_dir)) {
+            if (!mkdir($target_dir, 0777, true)) {
+                // In caso di errore, non fare nulla, funzione void
+                return;
+            }
+        }
+
+        // Percorso completo del file
+        $target_file = $target_dir . $file_name;
 
         // Controlla se il file è un .zip
         if (strtolower($file_extension) === 'zip') {
@@ -82,22 +106,27 @@ function uploadLesson($corso_id, $titolo, $descrizione, $file): string
                 $stmt->bind_param("isss", $corso_id, $titolo, $descrizione, $target_file);
                 $stmt->execute();
                 $stmt->close();
-
-                // Ritorna un messaggio di successo
-                return "Lezione caricata con successo!";
-            } else {
-                // Ritorna un errore se il file non può essere spostato nella destinazione
-                return "Errore nel caricamento del file.";
             }
-        } else {
-            // Ritorna un errore se il tipo di file non è .zip
-            return "Errore: il file deve essere in formato .zip.";
         }
-    } else {
-        // Ritorna un errore se c'è un problema con il caricamento del file
-        return "Errore nel caricamento del file.";
     }
 }
+
+// Funzione per il download
+#[NoReturn] function downloadLesson($filePath): void{
+
+    $fileName = basename($filePath);
+    $fileSize = filesize($filePath);
+
+    header("Content-Type: application/octet-stream");
+    header("Content-Disposition: attachment; filename=\"$fileName\"");
+    header("Content-Length: $fileSize");
+    header("Cache-Control: no-cache, no-store, must-revalidate");
+    header("Pragma: no-cache");
+    header("Expires: 0");
+
+    readfile($filePath);
+}
+
 
 // Funzione per recuperare i corsi del professore
 function getCoursesForProfessor($professore_id): array
@@ -106,19 +135,30 @@ function getCoursesForProfessor($professore_id): array
 
     // Query per ottenere i corsi del professore loggato
     $query_corsi = "
-        SELECT corsi.id, corsi.titolo, corsi.descrizione, utenti.nome AS professore_nome 
-        FROM corsi 
-        JOIN utenti ON corsi.professore_id = utenti.id 
-        WHERE corsi.professore_id = ?
-    ";
+    SELECT 
+        corsi.id, 
+        corsi.titolo, 
+        corsi.descrizione, 
+        utenti_professore.nome AS professore_nome, 
+        GROUP_CONCAT(studenti.nome ORDER BY studenti.nome ASC SEPARATOR ', ') AS studenti_nomi
+    FROM 
+        corsi
+    LEFT JOIN 
+        utenti AS utenti_professore ON corsi.professore_id = utenti_professore.id AND utenti_professore.role = 'professore'
+    LEFT JOIN 
+        iscrizioni ON corsi.id = iscrizioni.corso_id
+    LEFT JOIN 
+        utenti AS studenti ON iscrizioni.studente_id = studenti.id AND studenti.role = 'studente'
+    WHERE 
+        corsi.professore_id = ?
+    GROUP BY
+        corsi.id, corsi.titolo, corsi.descrizione, utenti_professore.nome";
 
     $stmt = $conn->prepare($query_corsi);
     $stmt->bind_param("i", $professore_id); // Parametro è l'ID del professore
     $stmt->execute();
     $result = $stmt->get_result();
-    $corsi = $result->fetch_all(MYSQLI_ASSOC);
-
-    return $corsi;
+    return $result->fetch_all(MYSQLI_ASSOC);
 }
 
 // Recupera i corsi del professore loggato
@@ -131,7 +171,7 @@ function getLessonsForCourse($corso_id): array
 
     // Query per ottenere le lezioni associate al corso
     $query_lezioni = "
-        SELECT id, titolo, descrizione, file_path
+        SELECT id, titolo, descrizione, data_caricamento, file_path
         FROM lezioni
         WHERE corso_id = ?
     ";
@@ -144,35 +184,66 @@ function getLessonsForCourse($corso_id): array
     return $result_lezioni->fetch_all(MYSQLI_ASSOC);
 }
 
+//Funzione per eliminare la lezione
+function deleteLesson($lezione_id, $filePath): void
+{
+    if (file_exists($filePath)) {
+        if (!unlink($filePath)) {
+            echo "Errore: impossibile eliminare il file.";
+        }
+    }
+
+    global $conn;
+
+    $sql = "DELETE FROM lezioni WHERE id = ?";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $lezione_id);
+    $stmt->execute();
+}
+
 
 // CRUD: Operazioni per utente professore
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    if (isset($_POST["action"])) {
-        switch ($_POST["action"]) {
-            case 'create_course':
-                // Creazione nuovo corso
-                createMyCourse($_POST["titolo"], $_POST["descrizione"], $professore_id);
-                break;
+switch ($_POST["action"]) {
+    case 'create_course':
+        // Creazione nuovo corso
+        createMyCourse($_POST["titolo"], $_POST["descrizione"], $professore_id);
+        break;
 
-            case 'update_course':
-                // Aggiornamento corso
-                updateMyCourse($_POST["corso_id"], $_POST["titolo"], $_POST["descrizione"]);
-                break;
+    case 'update_course':
+        // Aggiorna corso
+        updateMyCourse($_POST["corso_id"], $_POST["titolo"], $_POST["descrizione"]);
+        break;
 
-            case 'delete_course':
-                // Eliminazione corso
-                deleteCourse($_POST["corso_id"]);
-                break;
-        }
-    } elseif (isset($_FILES['lezione_file'])) {
+    case 'delete_course':
+        // Elimina corso
+        deleteMyCourse($_POST["corso_id"]);
+        break;
+
+    case 'upload_lesson':
+        // Carica lezione
         $corso_id = $_POST['corso_id'];  // campo nascosto nel modulo per il corso_id
         $titolo = $_POST['titolo'];      // Titolo della lezione
         $descrizione = $_POST['descrizione'];  // Descrizione della lezione
 
         // Invoca la funzione passando $_FILES['lezione_file']
-        $message = uploadLesson($corso_id, $titolo, $descrizione, $_FILES['lezione_file']);
-        echo $message;
-    }
+        uploadLesson($corso_id, $titolo, $descrizione, $_FILES['lezione_file']);
+        break;
+
+    case 'download_lesson':
+        // Scarica lezione
+        $filePath = $_POST['file_path'];
+        downloadLesson($filePath);
+
+    case 'delete_lesson':
+        // Elimina lezione
+        $filePath = $_POST['file_path'];
+        $lezione_id = $_POST['lezione_id'];
+        deleteLesson($lezione_id, $filePath);
+        break;
+
+    case 'logout':
+        logout();
 }
 
 ?>
@@ -191,89 +262,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <!-- Gestione Corsi -->
 <h1>Corsi</h1>
 
-<?php if (empty($corsi)): ?>
-    <p>Non hai ancora creato nessun corso.</p>
-<?php else: ?>
-    <?php foreach ($corsi as $corso): ?>
-        <!-- Dettagli del Corso -->
-        <h2><?php echo htmlspecialchars($corso["titolo"]); ?></h2>
-        <h3>Descrizione:</h3>
-        <p><?php echo htmlspecialchars($corso["descrizione"]); ?></p>
-        <h3>Professore:</h3>
-        <p><?php echo htmlspecialchars($corso["professore_nome"]); ?></p>
-
-        <form method="POST">
-            <input type="hidden" name="corso_id" value="<?= $corso['id'] ?>">
-            <button type="submit" name="action" value="delete_course">Elimina</button>
-        </form>
-
-        <button onclick="toggleForm('modifica_corso', <?= $corso["id"] ?>)">Modifica Corso</button>
-
-        <form id="modifica_corso-form-<?= $corso["id"] ?>" method="POST" style="display: none">
-            <input type="hidden" name="corso_id" value="<?= $corso['id'] ?>">
-            <label>
-                <input type="text" name="titolo" placeholder="Titolo" required/>
-            </label>
-            <label>
-                <input type="text" name="descrizione" placeholder="Descrizione" required/>
-            </label>
-            <button type="submit" name="action" value="update_course">Aggiorna</button>
-        </form>
-
-
-        <!-- Tabella delle Lezioni -->
-        <h3>Lezioni:</h3>
-        <?php
-        // Recupera le lezioni associate al corso
-        $lezioni = getLessonsForCourse($corso['id']);
-        if (empty($lezioni)): ?>
-            <p>Non ci sono lezioni per questo corso.</p>
-        <?php else: ?>
-            <table>
-                <thead>
-                <tr>
-                    <th>Titolo Lezione</th>
-                    <th>Descrizione</th>
-                    <th>File</th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($lezioni as $lezione): ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($lezione['titolo']); ?></td>
-                        <td><?php echo htmlspecialchars($lezione['descrizione']); ?></td>
-                        <td><a href="<?php echo htmlspecialchars($lezione['file_path']); ?>" target="_blank">Scarica</a></td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-        <?php endif; ?>
-
-        <button onclick="toggleForm('upload_lezioni', <?= $corso["id"] ?> )">Upload Lezioni</button>
-
-        <form id="upload_lezioni-form-<?= $corso["id"] ?>" style="display: none" method="POST" enctype="multipart/form-data">
-            <!-- ID del corso a cui appartiene la lezione -->
-            <input type="hidden" name="corso_id" value="<?= $corso["id"] ?>">  <!-- Modifica questo valore dinamicamente -->
-
-            <!-- Titolo della lezione -->
-            <label for="titolo">Titolo della lezione:</label>
-            <input type="text" name="titolo" id="titolo" placeholder="Titolo della lezione" required/>
-
-            <!-- Descrizione della lezione -->
-            <label for="descrizione">Descrizione della lezione:</label>
-            <input name="descrizione" id="descrizione" placeholder="Descrizione della lezione" required></input>
-
-            <!-- Caricamento del file .zip della lezione -->
-            <label for="lezione_file">File lezione (formato .zip):</label>
-            <input type="file" name="lezione_file" id="lezione_file" accept=".zip" required/>
-
-            <!-- Pulsante per inviare il modulo -->
-            <button type="submit" name="action" value="upload_lesson">Carica Lezione</button>
-        </form>
-
-    <?php endforeach; ?>
-<?php endif; ?>
-
 <!-- Crea Corso -->
 
 <button onclick="toggle('corso')">Crea Corso</button>
@@ -287,6 +275,133 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </label>
     <button type="submit" name="action" value="create_course">Crea Corso</button>
 </form>
+
+<?php if (empty($corsi)): ?>
+    <p>Non hai ancora creato nessun corso.</p>
+<?php else: ?>
+    <?php foreach ($corsi as $corso): ?>
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Titolo</th>
+            <th>Descrizione</th>
+            <th>Professore</th>
+            <th>Alunni</th>
+            <th>Azioni</th>
+        </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><?= $corso['id'] ?></td>
+                <td><?= htmlspecialchars($corso["titolo"])?></td>
+                <td><?= htmlspecialchars($corso["descrizione"])?></td>
+                <td><?= htmlspecialchars($corso["professore_nome"])?></td>
+                <td><?= htmlspecialchars($corso["studenti_nome"])?></td>
+                <td class="azioni">
+                    <button class="btn-azione" onclick="toggleForm('corso', <?= $corso['id']?>)">Modifica</button>
+                    <form method="POST">
+                        <input type="hidden" name="corso_id" value="<?= $corso['id'] ?>">
+                        <button class="btn-azione" type="submit" name="action" value="delete_course">Elimina</button>
+                    </form>
+                </td>
+            </tr>
+            <tr class="form-row" id="corso-form-<?= $corso['id'] ?>" style="display: none;">
+                <td colspan="6">
+                    <form method="post">
+                        <input type="hidden" name="corso_id" value="<?= $corso['id'] ?>">
+                        <label>
+                            Titolo:
+                            <input type="text" name="titolo" value="<?= htmlspecialchars($corso["titolo"]) ?>" required>
+                        </label>
+                        <label>
+                            Descrizione:
+                            <input type="text" name="descrizione" value="<?= htmlspecialchars($corso["descrizione"]) ?>" required>
+                        </label>
+                        <button type="submit" name="action" value="update_course">Salva</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+
+        <!-- Tabella delle Lezioni -->
+        <h3>Lezioni:</h3>
+        <?php
+        $lezioni = getLessonsForCourse($corso['id']);
+        if (empty($lezioni)): ?>
+        <p>Non ci sono lezioni</p>
+        <table>
+            <tr class="form-row" id="upload_lezioni-form-<?= $corso["id"] ?>" style="display: none;">
+                <td colspan="4">
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="corso_id" value="<?= $corso["id"] ?>">  <!-- Modifica questo valore dinamicamente -->
+                        <label for="titolo">Titolo della lezione:</label>
+                        <input type="text" name="titolo" id="titolo" placeholder="Titolo della lezione" required/>
+                        <label for="descrizione">Descrizione della lezione:</label>
+                        <input name="descrizione" id="descrizione" placeholder="Descrizione della lezione" required>
+                        <label for="lezione_file">File lezione (formato .zip):</label>
+                        <input type="file" name="lezione_file" id="lezione_file" accept=".zip" required/>
+                        <button type="submit" name="action" value="upload_lesson">Carica Lezione</button>
+                    </form>
+                </td>
+            </tr>
+        </table>
+        <?php else: ?>
+            <table>
+                <thead>
+                <tr>
+                    <th>Titolo Lezione</th>
+                    <th>Descrizione</th>
+                    <th>Data</th>
+                    <th>File</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($lezioni as $lezione): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($lezione['titolo']); ?></td>
+                        <td><?php echo htmlspecialchars($lezione['descrizione']); ?></td>
+                        <td><?php echo htmlspecialchars($lezione['data_caricamento']); ?></td>
+                        <!-- Form for the download button -->
+                        <td>
+                            <form method="POST">
+                                <input type="hidden" name="file_path" value="<?php echo htmlspecialchars($lezione['file_path']); ?>">
+                                <button class="btn-azione" name="action" value="download_lesson" type="submit">Scarica</button>
+                            </form>
+                            <form method="POST">
+                                <input type="hidden" name="lezione_id" value="<?php echo htmlspecialchars($lezione['id']); ?>">
+                                <input type="hidden" name="file_path" value="<?php echo htmlspecialchars($lezione['file_path']); ?>">
+                                <button class="btn-azione" name="action" value="delete_lesson" type="submit">Elimina</button>
+                            </form>
+                        </td>
+                    </tr>
+
+                <?php endforeach; ?>
+
+                <tr class="form-row" id="upload_lezioni-form-<?= $corso["id"] ?>" style="display: none;">
+                    <td colspan="4">
+                        <form method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="corso_id" value="<?= $corso["id"] ?>">  <!-- Modifica questo valore dinamicamente -->
+                            <label for="titolo">Titolo della lezione:</label>
+                            <input type="text" name="titolo" id="titolo" placeholder="Titolo della lezione" required/>
+                            <label for="descrizione">Descrizione della lezione:</label>
+                            <input name="descrizione" id="descrizione" placeholder="Descrizione della lezione" required>
+                            <label for="lezione_file">File lezione (formato .zip):</label>
+                            <input type="file" name="lezione_file" id="lezione_file" accept=".zip" required/>
+                            <button type="submit" name="action" value="upload_lesson">Carica Lezione</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
+        <button onclick="toggleForm('upload_lezioni', <?= $corso["id"] ?> )">Upload Lezioni</button>
+
+    <?php endforeach; ?>
+<?php endif; ?>
 
 <!-- Logout -->
 <form method="POST" class="logout">
