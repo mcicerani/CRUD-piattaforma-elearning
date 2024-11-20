@@ -3,7 +3,7 @@ CRUD piattaforma eLearning in php.
 
 # STRUTTURA PROGETTO
 
-##DIRECTORY PRINCIPALE
+## DIRECTORY PRINCIPALE
 Presenti le pagine principali del corso. Login&Registrazione e le Dashboard per admin, professori e studenti
 
 ## DATABASE
