@@ -12,6 +12,8 @@ function checkAdminPrivileges(): void
     }
 }
 
+checkAdminPrivileges();
+
 // Funzione per creare un nuovo utente
 function createUser($nome, $email, $password, $role): void
 {
@@ -45,6 +47,13 @@ function deleteUser($id): void
     $stmt_iscrizioni->bind_param("i", $id);
     $stmt_iscrizioni->execute();
     $stmt_iscrizioni->close();
+
+    // Elimina prima i corsi di cui è professore
+    $stmt_iscrizioni = $conn->prepare("DELETE FROM corsi WHERE professore_id = ?");
+    $stmt_iscrizioni->bind_param("i", $id);
+    $stmt_iscrizioni->execute();
+    $stmt_iscrizioni->close();
+
 
     // Elimina l'utente
     $stmt_utente = $conn->prepare("DELETE FROM utenti WHERE id = ?");
@@ -104,8 +113,7 @@ function deleteCourse($id): void
     $stmt_corso->close();
 }
 
-// Controllo privilegi dell'admin
-checkAdminPrivileges();
+
 
 // CRUD: Operazioni per utente admin
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -212,7 +220,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
     <script src="./js/index.js"></script>
     <script src="js/admin.js"></script>
 </head>
-</html>
+
 <body>
 
     <h1>Gestione Utenti e Corsi</h1>
@@ -385,13 +393,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
     <button onclick="toggle('utente')">Crea Utente</button>
 
     <form id="utente" method="POST" style="display: none">
-        <input type="text" name="nome" placeholder="Nome" required/>
-        <input type="email" name="email" placeholder="Email" required/>
-        <input type="password" name="password" placeholder="Password" required/>
-        <select name="role" required>
-            <option value="studente">Studente</option>
-            <option value="professore">Professore</option>
-        </select>
+        <label>
+            <input type="text" name="nome" placeholder="Nome" required/>
+        </label>
+        <label>
+            <input type="email" name="email" placeholder="Email" required/>
+        </label>
+        <label>
+            <input type="password" name="password" placeholder="Password" required/>
+        </label>
+        <label>
+            <select name="role" required>
+                <option value="studente">Studente</option>
+                <option value="professore">Professore</option>
+            </select>
+        </label>
         <button type="submit" name="action" value="create_user">Crea Utente</button>
     </form>
 
@@ -400,9 +416,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
     <button onclick="toggle('corso')">Crea Corso</button>
 
     <form id="corso" method="POST" style="display: none">
-        <input type="text" name="titolo" placeholder="Titolo" required/>
-        <input type="text" name="descrizione" placeholder="Descrizione" required/>
-        <input type="text" name="professore_id" placeholder="ID Professore" required/>
+        <label>
+            <input type="text" name="titolo" placeholder="Titolo" required/>
+        </label>
+        <label>
+            <input type="text" name="descrizione" placeholder="Descrizione" required/>
+        </label>
+        <label>
+            <input type="text" name="professore_id" placeholder="ID Professore" required/>
+        </label>
         <button type="submit" name="action" value="create_course">Crea Corso</button>
     </form>
 
@@ -413,3 +435,5 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
     </form>
 
 </body>
+
+</html>
