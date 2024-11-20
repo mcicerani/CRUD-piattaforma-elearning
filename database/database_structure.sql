@@ -29,7 +29,7 @@ CREATE TABLE `corsi` (
   PRIMARY KEY (`id`),
   KEY `professore_id` (`professore_id`),
   CONSTRAINT `corsi_ibfk_1` FOREIGN KEY (`professore_id`) REFERENCES `utenti` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -51,6 +51,25 @@ CREATE TABLE `iscrizioni` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `lezioni`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `lezioni` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `corso_id` int(11) NOT NULL,
+  `titolo` varchar(255) NOT NULL,
+  `descrizione` text DEFAULT NULL,
+  `file_path` varchar(255) NOT NULL,
+  `data_caricamento` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `corso_id` (`corso_id`),
+  CONSTRAINT `lezioni_ibfk_1` FOREIGN KEY (`corso_id`) REFERENCES `corsi` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `utenti`
 --
 
@@ -64,7 +83,7 @@ CREATE TABLE `utenti` (
   `role` enum('admin','professore','studente') DEFAULT 'studente',
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -80,4 +99,4 @@ CREATE TABLE `utenti` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-11-16 19:48:10
+-- Dump completed on 2024-11-20 15:07:30
