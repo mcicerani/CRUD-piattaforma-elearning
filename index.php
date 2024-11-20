@@ -3,7 +3,7 @@ global $conn;
 require_once './includes/config.php';
 require_once './includes/auth.php';
 
-// Funzione per controllare se l'utente è loggato e reindirizzarlo
+// READ - Funzione per controllare se l'utente è loggato e reindirizzarlo
 function redirectIfLoggedIn(): void
 {
     if (isLoggedIn()) {
@@ -21,7 +21,7 @@ function redirectIfLoggedIn(): void
     }
 }
 
-// Funzione per gestire la registrazione
+// CREATE - Funzione per gestire la registrazione
 function registerUser($nome, $email, $password, $role): string
 {
     global $conn;
@@ -37,7 +37,7 @@ function registerUser($nome, $email, $password, $role): string
     }
 }
 
-// Funzione per gestire il login
+// READ - Funzione per gestire il login
 function loginUser($email, $password) {
     global $conn;
 

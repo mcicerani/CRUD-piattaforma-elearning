@@ -20,7 +20,7 @@ checkStudentPrivileges();
 //Salva id dello studente loggato
 $studente_id = $_SESSION['user_id'];
 
-// Funzione per iscriversi a un corso
+// CREATE - Funzione per iscriversi a un corso
 function subscribe($studente_id, $corso_id) :void {
 
     global $conn;
@@ -32,7 +32,7 @@ function subscribe($studente_id, $corso_id) :void {
     $stmt->close();
 }
 
-// Funzione per annullare iscrizione al corso
+// DELETE - Funzione per annullare iscrizione al corso
 function unsubscribe($studente_id, $corso_id) :void {
 
     global $conn;
@@ -44,7 +44,7 @@ function unsubscribe($studente_id, $corso_id) :void {
     $stmt_iscrizioni->close();
 }
 
-// Funzione per scaricare le lezioni
+// DOWNLOAD - Funzione per scaricare le lezioni
 #[NoReturn] function downloadLesson($filePath): void{
 
     $fileName = basename($filePath);
@@ -74,6 +74,7 @@ $corsi_con_professore = "
 // Esegui la query e ottieni i risultati
 $corsi = $conn->query($corsi_con_professore)->fetch_all(MYSQLI_ASSOC);
 
+// READ - Funzione per recuperare corsi a cui è iscritto utente loggato
 function getCoursesforStudent($studente_id): array
 {
     global $conn;
@@ -106,6 +107,7 @@ function getCoursesforStudent($studente_id): array
     return $result->fetch_all(MYSQLI_ASSOC);
 }
 
+// READ - Funzione per recuperare lezioni di un corso
 function getLessonsForCourse($corso_id): array
 {
     global $conn;
@@ -125,7 +127,7 @@ function getLessonsForCourse($corso_id): array
     return $result_lezioni->fetch_all(MYSQLI_ASSOC);
 }
 
-// Funzione per verificare se uno studente è iscritto a un corso
+// READ - Funzione per verificare se uno studente è iscritto a un corso
 function hasSubscribed($studente_id, $corso_id): bool
 {
     global $conn; // Usa la connessione globale al database

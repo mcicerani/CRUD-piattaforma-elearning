@@ -14,7 +14,7 @@ function checkAdminPrivileges(): void
 
 checkAdminPrivileges();
 
-// Funzione per creare un nuovo utente
+// CREATE - Funzione per creare un nuovo utente
 function createUser($nome, $email, $password, $role): void
 {
     global $conn;
@@ -26,7 +26,7 @@ function createUser($nome, $email, $password, $role): void
     $stmt->close();
 }
 
-// Funzione per aggiornare un utente esistente
+// UPDATE - Funzione per aggiornare un utente esistente
 function updateUser($id, $nome, $role): void
 {
     global $conn;
@@ -37,7 +37,7 @@ function updateUser($id, $nome, $role): void
     $stmt->close();
 }
 
-// Funzione per eliminare un utente
+// DELETE - Funzione per eliminare un utente
 function deleteUser($id): void
 {
     global $conn;
@@ -62,7 +62,7 @@ function deleteUser($id): void
     $stmt_utente->close();
 }
 
-// Funzione per creare un nuovo corso
+// CREATE - Funzione per creare un nuovo corso
 function createCourse($titolo, $descrizione, $professore_id): void
 {
     global $conn;
@@ -73,7 +73,7 @@ function createCourse($titolo, $descrizione, $professore_id): void
     $stmt->close();
 }
 
-// Funzione per aggiornare un corso esistente
+// UPDATE - Funzione per aggiornare un corso esistente
 function updateCourse($id, $titolo, $descrizione, $professore_id): void
 {
     global $conn;
@@ -95,7 +95,7 @@ function updateCourse($id, $titolo, $descrizione, $professore_id): void
     $stmt->close();
 }
 
-// Funzione per eliminare un corso
+// DELETE - Funzione per eliminare un corso
 function deleteCourse($id): void{
     global $conn;
 
@@ -126,7 +126,7 @@ function deleteCourse($id): void{
     $stmt_corso->close();
 }
 
-// Elimina lezioni
+// DELETE - Elimina lezioni
 function deleteLesson($lezione_id, $filePath): void
 {
     if (file_exists($filePath)) {

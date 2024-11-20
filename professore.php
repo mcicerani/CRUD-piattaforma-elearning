@@ -20,7 +20,7 @@ checkProfessorPrivileges();
 //Salva id del professore loggato
 $professore_id = $_SESSION['user_id'];
 
-// Funzione per creare corso del professore loggato
+// CREATE - Funzione per creare corso del professore loggato
 function createMyCourse($titolo, $descrizione, $professore_id): void
 {
     global $conn;
@@ -31,7 +31,7 @@ function createMyCourse($titolo, $descrizione, $professore_id): void
     $stmt->close();
 }
 
-// Funzione per aggiornare corso del professore loggato
+// UPDATE - Funzione per aggiornare corso del professore loggato
 function updateMyCourse($id, $titolo, $descrizione): void
 {
     global $conn;
@@ -42,7 +42,7 @@ function updateMyCourse($id, $titolo, $descrizione): void
     $stmt->close();
 }
 
-// Funzione per eliminare un corso
+// DELETE - Funzione per eliminare un corso
 function deleteCourse($id): void
 {
     global $conn;
@@ -74,7 +74,7 @@ function deleteCourse($id): void
     $stmt_corso->close();
 }
 
-// Funzione per Caricare la lezione
+// UPLOAD - Funzione per Caricare la lezione
 function uploadLesson($corso_id, $titolo, $descrizione, $file): void
 {
     global $conn;  // Connessione al database
@@ -125,7 +125,7 @@ function uploadLesson($corso_id, $titolo, $descrizione, $file): void
     }
 }
 
-// Funzione per il download
+// DOWNLOAD - Funzione per il download
 #[NoReturn] function downloadLesson($filePath): void{
 
     $fileName = basename($filePath);
@@ -142,7 +142,7 @@ function uploadLesson($corso_id, $titolo, $descrizione, $file): void
 }
 
 
-// Funzione per recuperare i corsi del professore
+// READ - Funzione per recuperare i corsi del professore
 function getCoursesForProfessor($professore_id): array
 {
     global $conn;
@@ -178,7 +178,7 @@ function getCoursesForProfessor($professore_id): array
 // Recupera i corsi del professore loggato
 $corsi = getCoursesForProfessor($professore_id);
 
-// Funzione per recuperare le lezioni per un corso
+// READ - Funzione per recuperare le lezioni per un corso
 function getLessonsForCourse($corso_id): array
 {
     global $conn;
@@ -198,7 +198,7 @@ function getLessonsForCourse($corso_id): array
     return $result_lezioni->fetch_all(MYSQLI_ASSOC);
 }
 
-//Funzione per eliminare la lezione
+// DELETE - Funzione per eliminare la lezione
 function deleteLesson($lezione_id, $filePath): void
 {
     if (file_exists($filePath)) {
@@ -218,49 +218,53 @@ function deleteLesson($lezione_id, $filePath): void
 
 
 // CRUD: Operazioni per utente professore
-switch ($_POST["action"]) {
-    case 'create_course':
-        // Creazione nuovo corso
-        createMyCourse($_POST["titolo"], $_POST["descrizione"], $professore_id);
-        header("Location: professore.php");
-        break;
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    if (isset($_POST["action"])) {
+        switch ($_POST["action"]) {
+            case 'create_course':
+                // Creazione nuovo corso
+                createMyCourse($_POST["titolo"], $_POST["descrizione"], $professore_id);
+                header("Location: professore.php");
+                break;
 
-    case 'update_course':
-        // Aggiorna corso
-        updateMyCourse($_POST["corso_id"], $_POST["titolo"], $_POST["descrizione"]);
-        header("Location: professore.php");
-        break;
+            case 'update_course':
+                // Aggiorna corso
+                updateMyCourse($_POST["corso_id"], $_POST["titolo"], $_POST["descrizione"]);
+                header("Location: professore.php");
+                break;
 
-    case 'delete_course':
-        // Elimina corso
-        deleteCourse($_POST["corso_id"]);
-        header("Location: professore.php");
-        break;
+            case 'delete_course':
+                // Elimina corso
+                deleteCourse($_POST["corso_id"]);
+                header("Location: professore.php");
+                break;
 
-    case 'upload_lesson':
-        // Carica lezione
-        $corso_id = $_POST['corso_id'];  // campo nascosto nel modulo per il corso_id
-        $titolo = $_POST['titolo'];      // Titolo della lezione
-        $descrizione = $_POST['descrizione'];  // Descrizione della lezione
+            case 'upload_lesson':
+                // Carica lezione
+                $corso_id = $_POST['corso_id'];  // campo nascosto nel modulo per il corso_id
+                $titolo = $_POST['titolo'];      // Titolo della lezione
+                $descrizione = $_POST['descrizione'];  // Descrizione della lezione
 
-        // Invoca la funzione passando $_FILES['lezione_file']
-        uploadLesson($corso_id, $titolo, $descrizione, $_FILES['lezione_file']);
-        break;
+                // Invoca la funzione passando $_FILES['lezione_file']
+                uploadLesson($corso_id, $titolo, $descrizione, $_FILES['lezione_file']);
+                break;
 
-    case 'download_lesson':
-        // Scarica lezione
-        $filePath = $_POST['file_path'];
-        downloadLesson($filePath);
+            case 'download_lesson':
+                // Scarica lezione
+                $filePath = $_POST['file_path'];
+                downloadLesson($filePath);
 
-    case 'delete_lesson':
-        // Elimina lezione
-        $filePath = $_POST['file_path'];
-        $lezione_id = $_POST['lezione_id'];
-        deleteLesson($lezione_id, $filePath);
-        break;
+            case 'delete_lesson':
+                // Elimina lezione
+                $filePath = $_POST['file_path'];
+                $lezione_id = $_POST['lezione_id'];
+                deleteLesson($lezione_id, $filePath);
+                break;
 
-    case 'logout':
-        logout();
+            case 'logout':
+                logout();
+        }
+    }
 }
 
 ?>
