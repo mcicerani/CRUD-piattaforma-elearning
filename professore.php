@@ -207,9 +207,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <button type="submit" name="action" value="delete_course">Elimina</button>
         </form>
 
-        <button onclick="toggle('modifica_corso')">Modifica Corso</button>
+        <button onclick="toggleForm('modifica_corso', <?= $corso["id"] ?>)">Modifica Corso</button>
 
-        <form id="modifica_corso" method="POST" style="display: none">
+        <form id="modifica_corso-form-<?= $corso["id"] ?>" method="POST" style="display: none">
             <input type="hidden" name="corso_id" value="<?= $corso['id'] ?>">
             <label>
                 <input type="text" name="titolo" placeholder="Titolo" required/>
@@ -249,9 +249,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </table>
         <?php endif; ?>
 
-        <button onclick="toggle('upload_lezioni')">Upload Lezioni</button>
+        <button onclick="toggleForm('upload_lezioni', <?= $corso["id"] ?> )">Upload Lezioni</button>
 
-        <form id="upload_lezioni" style="display: none" method="POST" enctype="multipart/form-data">
+        <form id="upload_lezioni-form-<?= $corso["id"] ?>" style="display: none" method="POST" enctype="multipart/form-data">
             <!-- ID del corso a cui appartiene la lezione -->
             <input type="hidden" name="corso_id" value="<?= $corso["id"] ?>">  <!-- Modifica questo valore dinamicamente -->
 
