@@ -318,7 +318,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <td><?= htmlspecialchars($corso["titolo"])?></td>
                 <td><?= htmlspecialchars($corso["descrizione"])?></td>
                 <td><?= htmlspecialchars($corso["professore_nome"])?></td>
-                <td><?= htmlspecialchars($corso["studenti_nome"])?></td>
+                <td><?= htmlspecialchars($corso["studenti_nomi"])?></td>
                 <td class="azioni">
                     <button class="btn-azione" onclick="toggleForm('corso', <?= $corso['id']?>)">Modifica</button>
                     <form method="POST">
