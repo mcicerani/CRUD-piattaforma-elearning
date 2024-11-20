@@ -105,11 +105,43 @@ function deleteCourse($id): void{
     $stmt_iscrizioni->execute();
     $stmt_iscrizioni->close();
 
+    // Elimina le lezioni
+    $stmt_lezioni = $conn->prepare("SELECT * FROM lezioni WHERE corso_id = ?");
+    $stmt_lezioni->bind_param('i', $id);
+    $stmt_lezioni->execute();
+    $result = $stmt_lezioni->get_result();
+
+    // Elimina ogni lezione associata al corso
+    while ($lezione = $result->fetch_assoc()) {
+        // Chiamata alla funzione deleteLesson per eliminare il file e la lezione
+        deleteLesson($lezione['id'], $lezione['file_path']);
+    }
+
+    $stmt_lezioni->close();
+
     // Elimina il corso
     $stmt_corso = $conn->prepare("DELETE FROM corsi WHERE id = ?");
     $stmt_corso->bind_param("i", $id);
     $stmt_corso->execute();
     $stmt_corso->close();
+}
+
+// Elimina lezioni
+function deleteLesson($lezione_id, $filePath): void
+{
+    if (file_exists($filePath)) {
+        if (!unlink($filePath)) {
+            echo "Errore: impossibile eliminare il file.";
+        }
+    }
+
+    global $conn;
+
+    $sql = "DELETE FROM lezioni WHERE id = ?";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $lezione_id);
+    $stmt->execute();
 }
 
 // CRUD: Operazioni per utente admin
@@ -157,6 +189,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             case 'logout':
                 logout();
+                break;
         }
     }
 }
@@ -192,13 +225,17 @@ $professori = $conn->query($query_professori)->fetch_all(MYSQLI_ASSOC);
 
 // Query per tabella corsi (id, titolo e descrizione) con i prof del corso e gli studenti iscritti
 $query_corsi = "
-    SELECT  corsi.id AS corso_id, corsi.titolo AS corso_titolo, corsi.descrizione AS corso_descrizione,
-            corsi.professore_id AS professore_id, utenti.nome AS professore_nome,
-            GROUP_CONCAT(utenti_studente.nome SEPARATOR ', ') AS studenti
+    SELECT  
+        corsi.id AS corso_id, 
+        corsi.titolo AS corso_titolo, 
+        corsi.descrizione AS corso_descrizione,
+        corsi.professore_id AS professore_id, 
+        utenti.nome AS professore_nome,
+        GROUP_CONCAT(utenti_studente.nome ORDER BY utenti_studente.nome SEPARATOR ', ') AS studenti
     FROM corsi
     LEFT JOIN utenti ON corsi.professore_id = utenti.id AND utenti.role = 'professore'
     LEFT JOIN iscrizioni ON corsi.id = iscrizioni.corso_id
-    LEFT JOIN utenti AS utenti_studente ON iscrizioni.studente_id = utenti.id
+    LEFT JOIN utenti AS utenti_studente ON iscrizioni.studente_id = utenti_studente.id
     GROUP BY corsi.id
     ";
 

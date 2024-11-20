@@ -43,7 +43,7 @@ function updateMyCourse($id, $titolo, $descrizione): void
 }
 
 // Funzione per eliminare un corso
-function deleteMyCourse($id): void
+function deleteCourse($id): void
 {
     global $conn;
 
@@ -52,6 +52,20 @@ function deleteMyCourse($id): void
     $stmt_iscrizioni->bind_param("i", $id);
     $stmt_iscrizioni->execute();
     $stmt_iscrizioni->close();
+
+    // Elimina le lezioni
+    $stmt_lezioni = $conn->prepare("SELECT * FROM lezioni WHERE corso_id = ?");
+    $stmt_lezioni->bind_param('i', $id);
+    $stmt_lezioni->execute();
+    $result = $stmt_lezioni->get_result();
+
+    // Elimina ogni lezione associata al corso
+    while ($lezione = $result->fetch_assoc()) {
+        // Chiamata alla funzione deleteLesson per eliminare il file e la lezione
+        deleteLesson($lezione['id'], $lezione['file_path']);
+    }
+
+    $stmt_lezioni->close();
 
     // Elimina il corso
     $stmt_corso = $conn->prepare("DELETE FROM corsi WHERE id = ?");
@@ -208,16 +222,19 @@ switch ($_POST["action"]) {
     case 'create_course':
         // Creazione nuovo corso
         createMyCourse($_POST["titolo"], $_POST["descrizione"], $professore_id);
+        header("Location: professore.php");
         break;
 
     case 'update_course':
         // Aggiorna corso
         updateMyCourse($_POST["corso_id"], $_POST["titolo"], $_POST["descrizione"]);
+        header("Location: professore.php");
         break;
 
     case 'delete_course':
         // Elimina corso
-        deleteMyCourse($_POST["corso_id"]);
+        deleteCourse($_POST["corso_id"]);
+        header("Location: professore.php");
         break;
 
     case 'upload_lesson':
